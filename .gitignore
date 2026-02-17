@@ -46,3 +46,6 @@ htmlcov/
 
 # Azure / deployment artifacts
 *.zip
+
+uploads/
+exports/
