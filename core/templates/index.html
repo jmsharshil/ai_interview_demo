@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/static/favicon.ico">
+
+<title>AI Voice Interviewer</title>
+
+<style>
+/* ===============================
+   GLOBAL
+================================ */
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #F8FAFC, #D9EAFD 70%);
+  color: #4a5568;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 920px;
+  padding: 20px;
+}
+
+/* ===============================
+   HEADER
+================================ */
+.header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.header h1 {
+  font-size: 34px;
+  font-weight: 700;
+  color: #4a5568;
+}
+
+.header p {
+  color: #6b7280;
+}
+
+/* ===============================
+   CARD
+================================ */
+#setupCard {
+  margin: 0 auto;
+  width: 100%;
+}
+
+.card {
+  background: #F8FAFC;
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow:
+    0 0 0 1px #BCCCDC,
+    0 25px 45px rgba(154,166,178,0.35);
+}
+
+/* ===============================
+   FORM
+================================ */
+label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+select,
+input[type=file] {
+  width: 100%;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #D9EAFD;
+  color: #4a5568;
+  border: 1px solid #BCCCDC;
+  font-size: 15px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  background: #9AA6B2;
+  color: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  background: #7f8a96;
+}
+
+/* ===============================
+   CHAT
+================================ */
+.chat {
+  margin-top: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+/* BOT */
+.bot {
+  background: #D9EAFD;
+  border-left: 6px solid #9AA6B2;
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  max-width: 75%;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* USER */
+.user {
+  background: #b8d5f1;
+  border-right: 6px solid #9AA6B2;
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  margin-left: auto;
+  max-width: 75%;
+  text-align: right;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ===============================
+   FOOTER
+================================ */
+.footer input {
+  width: 100%;
+  padding: 6px;
+  background: #D9EAFD;
+  border: 1px solid #BCCCDC;
+  border-radius: 10px;
+  color: #4a5568;
+  text-align: center;
+}
+
+/* ===============================
+   LOADING OVERLAY
+================================ */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(248,250,252,0.92);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-box {
+  text-align: center;
+}
+
+.spinner {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 6px solid #BCCCDC;
+  border-top-color: #9AA6B2;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 18px;
+  font-size: 15px;
+  color: #6b7280;
+  letter-spacing: 0.4px;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .container { max-width: 860px; }
+  .header h1 { font-size: 30px; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  body { align-items: flex-start; padding-top: 10px; }
+
+  .container { max-width: 100%; padding: 14px; }
+
+  .header h1 { font-size: 26px; }
+  .header p { font-size: 14px; }
+
+  .card { padding: 20px; }
+
+  .chat { max-height: 65vh; }
+
+  .bot,
+  .user {
+    max-width: 90%;
+    font-size: 16px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .header h1 { font-size: 22px; }
+  .bot,
+  .user { max-width: 95%; }
+}
+
+/* Smooth scrolling (iOS) */
+.chat {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Prevent iOS zoom */
+input,
+select,
+button {
+  font-size: 16px;
+}
+
+/* ===============================
+   INTERVIEW CONTROL BUTTONS
+================================ */
+
+.interview-controls {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Pause */
+.pause-btn {
+  padding: 14px 22px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(245,158,11,0.35);
+}
+
+/* Restart */
+.restart-btn {
+  padding: 14px 22px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(34,197,94,0.35);
+}
+
+/* End */
+.end-btn {
+  padding: 14px 22px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(239,68,68,0.35);
+}
+
+.pause-btn:hover,
+.restart-btn:hover,
+.end-btn:hover {
+  transform: translateY(-2px);
+}
+
+
+
+/* ===============================
+   INTERVIEW ACTION BAR
+================================ */
+
+.interview-action-bar {
+  margin-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+/* LEFT SIDE (Pause / Restart) */
+.action-left {
+  display: flex;
+  gap: 12px;
+}
+
+/* RIGHT SIDE (End Interview) */
+.action-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Mobile stacking */
+@media (max-width: 640px) {
+  .interview-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-left,
+  .action-right {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+
+
+/* ===============================
+   FOOTER STATE COLORS
+================================ */
+
+/* Bot speaking → green */
+.footer.bot-speaking input {
+  background: #dcfce7;              /* light green */
+  border-color: #22c55e;
+  color: #166534;
+}
+
+/* User speaking → blue */
+.footer.user-speaking input {
+  background: #dbeafe;              /* light blue */
+  border-color: #3b82f6;
+  color: #1e3a8a;
+}
+
+
+/* ===============================
+   FOOTER STATES
+================================ */
+
+.footer input {
+  transition: background 0.25s ease, border-color 0.25s ease;
+  font-weight: 500;
+}
+
+/* BOT SPEAKING */
+.footer.bot-speaking input {
+  background: #DCFCE7;            /* green */
+  border-color: #22C55E;
+  color: #166534;
+}
+
+/* USER SPEAKING */
+.footer.user-speaking input {
+  background: #DBEAFE;            /* blue */
+  border-color: #3B82F6;
+  color: #1E40AF;
+}
+
+
+
+
+/* ===============================
+   WIDER INTERVIEW ACTION BUTTONS
+================================ */
+
+/* Shared width for action buttons */
+.pause-btn,
+.restart-btn,
+.end-btn {
+  min-width: 260px;          /* 🔑 wider buttons */
+  padding: 16px 28px;        /* more horizontal space */
+  font-size: 16px;
+}
+
+/* LEFT side spacing stays clean */
+.action-left .pause-btn,
+.action-left .restart-btn {
+  text-align: center;
+}
+
+/* RIGHT side end button */
+.action-right .end-btn {
+  text-align: center;
+}
+
+/* Mobile: full width buttons */
+@media (max-width: 640px) {
+  .pause-btn,
+  .restart-btn,
+  .end-btn {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+.home-logo {
+  display: flex;
+  justify-content: center;   /* horizontal center */
+  align-items: center;
+  margin: 16px 0 10px;       /* spacing from top & title */
+}
+
+.home-logo img {
+  width: 110px;              /* adjust if needed */
+  height: auto;
+  max-width: 40vw;
+}
+
+@media (max-width: 768px) {
+  .home-logo img {
+    width: 85px;
+  }
+}
+
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- HOME LOGO -->
+  <div id="homeLogo" class="home-logo">
+    <img src="/static/jms_logo.png" alt="JMS Logo">
+  </div>
+
+  <div class="header">
+    <h1>🎙️ AI Voice Interview</h1>
+    <p>Automated screening powered by JMS</p>
+  </div>
+
+
+
+  <!-- ================= SETUP ================= -->
+
+  <div class="card" id="setupCard">
+
+    <div class="setup-grid">
+
+      <!-- PREDEFINED -->
+      <div>
+
+        <h3>🎯 Predefined Role</h3>
+
+        <label>Domain</label>
+        <select id="domain"></select>
+
+        <label>Role</label>
+        <select id="role"></select>
+
+        <button onclick="showLoading(); startPredefined()">Start Interview</button>
+
+      </div>
+
+      <!-- AUTO JD -->
+      {% comment %} <div>
+
+        <h3>📄 JD / Resume</h3>
+
+        <label>Upload Document</label>
+        <input type="file" id="jdFile" accept=".pdf,.doc,.docx">
+
+        <button onclick="showLoading(); startAutoJD()">Upload & Start Interview</button>
+
+      </div> {% endcomment %}
+
+    </div>
+
+  </div>
+
+  <!-- ================= INTERVIEW ================= -->
+
+  <div class="card" id="interviewCard" style="display:none;">
+
+    <div class="chat" id="chat"></div>
+
+    <div class="footer">
+      <input id="answer"
+             placeholder="🎤"
+             disabled />
+    </div>
+
+  </div>
+
+
+  <!-- ================= INTERVIEW ACTION BAR ================= -->
+  <div id="interviewActionBar" class="interview-action-bar" style="display:none;">
+
+    <!-- LEFT SIDE -->
+    <div class="action-left">
+      <button id="pauseBtn" class="pause-btn" onclick="pauseInterview()">
+        ⏸ Pause Interview
+      </button>
+
+      <button id="restartBtn" class="restart-btn" onclick="restartInterview()" style="display:none;">
+        ▶ Restart Interview
+      </button>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="action-right">
+      <button id="endInterviewBtn" class="end-btn">
+        ⛔ End Interview
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+<!-- ================= LOADING ================= -->
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-text">
+      Preparing interview…<br>
+      Analyzing role & initializing voice engine
+    </div>
+  </div>
+</div>
+
+<!-- ================= YOUR CRITICAL SCRIPT (UNCHANGED) ================= -->
+
+<script>
+
+function exportInterview(format) {
+  alert("Export " + format.toUpperCase() + " (backend next step)");
+}
+
+function skipExport() {
+  document.getElementById("exportCard").innerHTML =
+    "<p style='color:#94a3b8'>Export skipped.</p>";
+}
+
+/* =====================================================
+   CONFIG
+===================================================== */
+
+const START_URL = "/api/v1/start/";
+const START_AUTO_URL = "/api/v1/start-auto/";
+const NEXT_URL = "/api/v1/next/";
+const DOMAINS_URL = "/api/v1/domains/";
+const ROLES_URL = "/api/v1/roles/";
+
+
+let sessionId = null;
+let recognition = null;
+let interviewFinished = false;
+let answerFinalized = false;
+
+
+
+// ================= PAUSE TRACKING =================
+let silenceTimer = null;
+let speechBuffer = "";  
+let lastSpeechTime = 0;
+
+const COMMA_PAUSE_THRESHOLD = 1500;       // comma pause
+const USER_LONG_SILENCE_LIMIT = 3500;    // ✅ LONG thinking pause
+
+
+
+/* =====================================================
+   DEVICE DETECTION (INFO ONLY)
+===================================================== */
+
+const IS_IOS = /iPhone|Macbook|iPad|iPod|Macintosh/i.test(navigator.userAgent);
+
+/* =====================================================
+   AUDIO (UNCHANGED – iPhone SAFE)
+===================================================== */
+
+let iosAudio = new Audio();
+iosAudio.playsInline = true;
+iosAudio.preload = "auto";
+
+// ✅ MUST EXIST BEFORE unlockIOS()
+let audioContext = null;
+
+
+/* =====================================================
+   MIC STATE (REFERENCE STYLE)
+===================================================== */
+
+let micActive = false;
+
+/* =====================================================
+   UI
+===================================================== */
+
+function addBot(t) {
+  chat.innerHTML += `<div class="bot">${t}</div>`;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addUser(t) {
+  let last = chat.querySelector(".user:last-child");
+
+  if (last && !answerFinalized) {
+    // update same line
+    last.innerText = t;
+  } else {
+    // create new line only once
+    chat.innerHTML += `<div class="user">${t}</div>`;
+  }
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
+
+/* =====================================================
+   DOMAIN + ROLE LOAD (UNCHANGED)
+===================================================== */
+
+fetch(DOMAINS_URL)
+  .then(r => r.json())
+  .then(d => {
+    domain.innerHTML = "";
+    d.domains.forEach(x => {
+      domain.innerHTML += `<option value="${x.id}">${x.label}</option>`;
+    });
+    if (d.domains.length) loadRoles();
+  });
+
+domain.onchange = loadRoles;
+
+function loadRoles() {
+  if (!domain.value) return;
+  fetch(`${ROLES_URL}${domain.value}/`)
+    .then(r => r.json())
+    .then(d => {
+      role.innerHTML = "";
+      d.roles.forEach(x => {
+        role.innerHTML += `<option value="${x.id}">${x.label}</option>`;
+      });
+    });
+}
+
+/* =====================================================
+   AUDIO UNLOCK (UNCHANGED)
+===================================================== */
+
+async function unlockIOS() {
+  if (!audioContext)
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  if (audioContext.state === "suspended")
+    await audioContext.resume();
+
+  const buf = audioContext.createBuffer(1, 1, 22050);
+  const src = audioContext.createBufferSource();
+  src.buffer = buf;
+  src.connect(audioContext.destination);
+  src.start();
+}
+
+
+// ================= TEXT FORMATTER =================
+function formatSpokenText(text) {
+
+  if (!text) return "";
+
+  text = text.trim();
+
+  // Capitalize first letter
+  text = text.charAt(0).toUpperCase() + text.slice(1);
+
+  // Add full stop if missing
+  if (!/[.!?]$/.test(text)) {
+    text += ".";
+  }
+
+  return text;
+}
+
+
+function formatWithPause(text) {
+  text = text.trim();
+
+  // Capitalize first letter
+  if (text.length) {
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  // Avoid duplicate punctuation
+  text = text.replace(/\s+/g, " ");
+
+  return text;
+}
+
+
+
+/* =====================================================
+   MIC INITIALIZATION (REFERENCE ENGINE)
+===================================================== */
+
+function initMic() {
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert("Speech recognition not supported");
+    return;
+  }
+
+  recognition = new SR();
+  recognition.lang = "en-IN";
+
+  // 🔥 EXACT reference behavior
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    setUserSpeakingUI();
+    micActive = true;
+  };
+
+  recognition.onresult = e => {
+
+    if (answerFinalized) return;
+
+    const now = Date.now();
+    let text = e.results[0][0].transcript.trim();
+    if (!text) return;
+
+    // 🔹 COMMA HANDLING
+    if (lastSpeechTime && (now - lastSpeechTime) > COMMA_PAUSE_THRESHOLD) {
+      if (!speechBuffer.endsWith(",")) {
+        speechBuffer += ", ";
+      }
+    }
+
+    speechBuffer += text;
+    lastSpeechTime = now;
+
+    addUser(formatWithPause(speechBuffer));
+
+    // 🔹 RESET LONG SILENCE TIMER (THIS IS THE KEY FIX)
+    if (silenceTimer) clearTimeout(silenceTimer);
+
+    silenceTimer = setTimeout(() => {
+
+      if (answerFinalized) return; // 🔒 DOUBLE SAFETY
+
+      answerFinalized = true;      // ✅ FINALIZE ONCE
+
+      stopMic(); // 🔴 mic OFF only after LONG silence
+
+      let finalText = formatWithPause(speechBuffer);
+      if (!/[.!?]$/.test(finalText)) {
+        finalText += ".";
+      }
+
+      speechBuffer = "";
+      lastSpeechTime = 0;
+
+      sendAnswer(finalText);
+
+    }, USER_LONG_SILENCE_LIMIT);
+  };
+
+
+  recognition.onend = () => {
+    // 🔥 Android auto-end fix
+    if (!interviewFinished && micActive) {
+      try { recognition.start(); } catch {}
+    }
+  };
+
+  recognition.onerror = () => stopMic();
+}
+
+/* =====================================================
+   MIC CONTROL (REFERENCE STYLE)
+===================================================== */
+
+function startMic() {
+  if (interviewFinished) return;
+  if (!recognition) initMic();
+  micActive = true;
+  try { recognition.start(); } catch {}
+}
+
+function stopMic() {
+  micActive = false;
+  if (recognition) {
+    try { recognition.stop(); } catch {}
+  }
+}
+
+/* =====================================================
+   AUDIO PLAY (BOT OWNS MIC – REFERENCE)
+===================================================== */
+
+function playAudio(b64, isFinal = false) {
+
+  // 🟢 BOT SPEAKING
+  stopMic();
+  disablePauseBtn();
+  setBotSpeakingUI()
+  setFooterBotSpeaking();
+
+  if (!b64) {
+    if (!isFinal) {
+      setUserSpeakingUI(); 
+      startMic();
+      enablePauseBtn();
+      setFooterUserSpeaking(); // mic ON
+    }
+    return;
+  }
+
+  iosAudio.src = "data:audio/wav;base64," + b64;
+  iosAudio.load();
+
+  iosAudio.onended = () => {
+
+    answerFinalized = false;
+
+    if (!isFinal && !interviewFinished) {
+      // 🔵 USER TURN
+      startMic();
+      enablePauseBtn();
+      setFooterUserSpeaking();
+    } else {
+      resetFooterState();
+    }
+  };
+
+  iosAudio.play().catch(() => {});
+}
+
+
+/* =====================================================
+   START PREDEFINED
+===================================================== */
+
+async function startPredefined() {
+
+  await unlockIOS();
+  initMic();
+
+  const r = await fetch(START_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      company: "JMS",
+      role_label: role.options[role.selectedIndex].text,
+      designation: role.value
+    })
+  });
+
+  const d = await r.json();
+  sessionId = d.session_id;
+
+  setupCard.style.display = "none";
+  interviewCard.style.display = "block";
+  document.getElementById("interviewActionBar").style.display = "flex";
+
+
+
+  addBot(d.question.text);
+  playAudio(d.audio);
+}
+
+/* =====================================================
+   AUTO JD
+===================================================== */
+
+async function startAutoJD() {
+
+  const file = document.getElementById("jdFile").files[0];
+  if (!file) return alert("Upload JD first");
+
+  await unlockIOS();
+  initMic();
+
+  const fd = new FormData();
+  fd.append("jd", file);
+
+  const r = await fetch(START_AUTO_URL, {
+    method: "POST",
+    body: fd
+  });
+
+  const d = await r.json();
+  sessionId = d.session_id;
+
+  setupCard.style.display = "none";
+  interviewCard.style.display = "block";
+  document.getElementById("interviewControls").style.display = "flex";
+
+
+  addBot(d.question.text);
+  playAudio(d.audio);
+}
+
+/* =====================================================
+   SEND ANSWER (UNCHANGED)
+===================================================== */
+
+async function sendAnswer(text) {
+
+  if (interviewFinished) return;
+
+  const r = await fetch(NEXT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: sessionId,
+      answer: text
+    })
+  });
+
+  const d = await r.json();
+  addBot(d.question.text);
+
+  if (d.finished) {
+    interviewFinished = true;
+    stopMic();
+    answer.disabled = true;
+    answer.placeholder = "Interview finished";
+    document.getElementById("endInterviewWrapper").style.display = "none";
+    playAudio(d.audio, true);
+
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 8000); // (user can read final message)
+    document.getElementById("exportCard").style.display = "block";
+    return;
+  }
+
+  playAudio(d.audio);
+}
+
+/* ================= FORCE END ================= */
+
+function endInterviewUI() {
+
+  interviewFinished = true;
+
+  stopMic();
+
+  answer.disabled = true;
+  answer.placeholder = "Interview finished";
+}
+
+
+function exportInterview(format) {
+  alert("Export " + format.toUpperCase() + " (backend next step)");
+}
+
+function skipExport() {
+  document.getElementById("exportCard").innerHTML =
+    "<p style='color:#94a3b8'>Export skipped.</p>";
+}
+
+function exportInterview(fmt) {
+
+  fetch("/api/export/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: sessionId,
+      format: fmt
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      alert("Exported successfully: " + d.file);
+    } else {
+      alert("Export failed");
+    }
+  });
+}
+
+
+/* ===============================
+   PAUSE / RESUME INTERVIEW
+================================ */
+
+let interviewPaused = false;
+
+function pauseInterview() {
+
+  interviewPaused = true;
+
+  // stop mic
+  stopMic();
+
+  // stop bot audio if playing
+  try { iosAudio.pause(); } catch {}
+
+  // toggle buttons
+  disablePauseBtn(); // 🔒
+  document.getElementById("pauseBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "inline-block";
+
+  answer.placeholder = "⏸ Interview paused";
+}
+
+function restartInterview() {
+
+  interviewPaused = false;
+
+  // resume mic
+  startMic();
+  enablePauseBtn();
+
+  // toggle buttons
+  document.getElementById("restartBtn").style.display = "none";
+  document.getElementById("pauseBtn").style.display = "inline-block";
+
+  answer.placeholder = "🎤 Listening...";
+}
+
+
+
+function disablePauseBtn() {
+  const btn = document.getElementById("pauseBtn");
+  if (!btn) return;
+  btn.disabled = true;
+  btn.style.opacity = "0.6";
+  btn.style.cursor = "not-allowed";
+}
+
+function enablePauseBtn() {
+  const btn = document.getElementById("pauseBtn");
+  if (!btn) return;
+  btn.disabled = false;
+  btn.style.opacity = "1";
+  btn.style.cursor = "pointer";
+}
+
+
+/* ===============================
+   FOOTER STATE HELPERS
+================================ */
+
+function setBotSpeakingUI() {
+  const footer = document.querySelector(".footer");
+  footer.classList.remove("user-speaking");
+  footer.classList.add("bot-speaking");
+
+  answer.value = "🗣️ Speaking…";
+}
+
+function setUserSpeakingUI() {
+  const footer = document.querySelector(".footer");
+  footer.classList.remove("bot-speaking");
+  footer.classList.add("user-speaking");
+
+  answer.value = "🎤 Speak now…";
+}
+
+function resetFooterUI() {
+  const footer = document.querySelector(".footer");
+  footer.classList.remove("bot-speaking", "user-speaking");
+
+  answer.value = "";
+  answer.placeholder = "🎤";
+}
+
+
+
+/* ===============================
+   END INTERVIEW HANDLER
+================================ */
+
+document.getElementById("endInterviewBtn").onclick = () => {
+
+  // stop mic
+  if (recognition) {
+    try { recognition.stop(); } catch {}
+  }
+
+  interviewFinished = true;
+  sessionId = null;
+
+  // optional: notify backend (safe even if API missing)
+  fetch("/api/v1/end/", { method: "POST" }).catch(() => {});
+
+  // redirect to interview page
+  window.location.href = "/";
+};
+
+
+function setFooterBotSpeaking() {
+  const footer = document.querySelector(".footer");
+  if (!footer) return;
+  footer.classList.add("bot-speaking");
+  footer.classList.remove("user-speaking");
+}
+
+function setFooterUserSpeaking() {
+  const footer = document.querySelector(".footer");
+  if (!footer) return;
+  footer.classList.add("user-speaking");
+  footer.classList.remove("bot-speaking");
+}
+
+function resetFooterState() {
+  const footer = document.querySelector(".footer");
+  if (!footer) return;
+  footer.classList.remove("bot-speaking", "user-speaking");
+}
+
+
+
+
+</script>
+
+<!-- ================= LOADING HELPERS ================= -->
+
+<script>
+function showLoading() {
+  document.getElementById("loadingOverlay").style.display = "flex";
+}
+
+function hideLoading() {
+  document.getElementById("loadingOverlay").style.display = "none";
+}
+
+const obs = new MutationObserver(() => {
+  if (interviewCard.style.display === "block") {
+    hideLoading();
+  }
+});
+
+obs.observe(document.body, {
+  attributes: true,
+  subtree: true,
+  attributeFilter: ["style"]
+});
+</script>
+
+</body>
+</html>
