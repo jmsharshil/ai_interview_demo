@@ -282,8 +282,7 @@ if BASE_DIR not in sys.path:
 
 
 from urllib.parse import urlparse, unquote
-import tkinter as tk
-from tkinter import filedialog
+
 
 
 from core.services.session_store import create_session
@@ -408,6 +407,14 @@ def main():
 
         print("\n📂 AUTO JD MODE ENABLED\n")
 
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+        except ImportError:
+            print("❌ Tkinter is not available in this environment.")
+            print("This mode only works on local desktop.")
+            return
+
         # -------- FILE PICKER --------
         root = tk.Tk()
         root.withdraw()
@@ -424,6 +431,7 @@ def main():
         if not jd_path:
             print("❌ No file selected.")
             return
+
 
         # -------- URI FIX --------
         if jd_path.startswith("file:///"):
