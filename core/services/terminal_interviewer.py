@@ -404,16 +404,10 @@ def main():
     # =====================================================
 
     if args.auto:
+        import tkinter as tk
+        from tkinter import filedialog
 
         print("\n📂 AUTO JD MODE ENABLED\n")
-
-        try:
-            import tkinter as tk
-            from tkinter import filedialog
-        except ImportError:
-            print("❌ Tkinter is not available in this environment.")
-            print("This mode only works on local desktop.")
-            return
 
         # -------- FILE PICKER --------
         root = tk.Tk()
@@ -431,7 +425,6 @@ def main():
         if not jd_path:
             print("❌ No file selected.")
             return
-
 
         # -------- URI FIX --------
         if jd_path.startswith("file:///"):
